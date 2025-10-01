@@ -1,0 +1,18 @@
+func test() {
+return 10
+}
+func do_nothing() {
+return 1
+}
+func name(a, b, c := 3) {
+return a+b+c
+}
+x := 4
+if (x = 4) {
+print("hi")
+}
+Loop, x {
+print("hi: "+A_Index)
+}
+name(test(), 5)
+do_nothing()

@@ -1,0 +1,184 @@
+include "HT-Lib.htvm"
+
+
+
+arr str allFuncNames_GLOABAL
+
+
+
+func bool isInAllFuncNames_GLOABAL(str line) {
+    Loop, allFuncNames_GLOABAL.size() {
+        if (line = allFuncNames_GLOABAL[A_Index]) {
+            return true
+        }
+    }
+    return false
+}
+
+
+func str expressionParser(str line) {
+
+str outTemp3 := ""
+str outTemp4 := ""
+line := StrReplace(line, "<=", " AAAvbsdkjvsbd3AAAAAAvbsdkjvsbd1AAA ")
+line := StrReplace(line, ">=", " AAAvbsdkjvsbd2AAAAAAvbsdkjvsbd1AAA ")
+line := StrReplace(line, "!=", " !AAAvbsdkjvsbd1AAA ")
+line := StrReplace(line, "=", " AAAvbsdkjvsbd1AAA ")
+line := StrReplace(line, ">", " AAAvbsdkjvsbd2AAA ")
+line := StrReplace(line, "<", " AAAvbsdkjvsbd3AAA ")
+line := StrReplace(line, "AAAvbsdkjvsbd1AAA", "=")
+line := StrReplace(line, "AAAvbsdkjvsbd2AAA", ">")
+line := StrReplace(line, "AAAvbsdkjvsbd3AAA", "<")
+line := StrReplace(line, "&", " and ")
+line := StrReplace(line, "|", " or ")
+
+
+outTemp3 := ""
+Loop, Parse, line, "/" {
+
+if (isInAllFuncNames_GLOABAL(StrSplit(A_LoopField, " ", 1))) {
+outTemp4 := ""
+
+Loop, Parse, A_LoopField, " " {
+if (A_Index = 0) {
+outTemp4 .= A_LoopField . "("
+}
+else {
+outTemp4 .= A_LoopField . " "
+}
+}
+
+
+outTemp3 .= Trim(outTemp4)
+}
+else {
+outTemp3 .= A_LoopField
+}
+
+}
+line := outTemp3
+
+
+return line
+}
+
+
+main
+str code := ""
+str out := ""
+str outTemp1 := ""
+str outTemp2 := ""
+
+str params := getLangParams("h_sharp", "hss")
+if (params != "") {
+code := FileRead(params)
+code := cleanUpFirst(code)
+code := preserveStrings(code)
+code := handleComments(code, ";")
+code := formatCurlyBracesForParsing(code)
+; code
+
+print(code)
+
+code := StrReplace(code, "]", Chr(10))
+code := StrReplace(code, "$", "A_Index")
+code := StrReplace(code, "\", Chr(10))
+code := StrReplace(code, "???", Chr(10) . "-???")
+code := StrReplace(code, "??", Chr(10) . "--??")
+code := StrReplace(code, "?", Chr(10) . "---?")
+code := StrReplace(code, ".", Chr(10) . "." . Chr(10))
+code := indent_nested_curly_braces(code)
+Loop, Parse, code, `n, `r {
+out .= Trim(A_LoopField) . Chr(10)
+}
+StringTrimRight, code, out, 1
+out := ""
+
+Loop, Parse, code, `n, `r {
+
+if (InStr(A_LoopField, "{")) {
+out .= Trim("Loop, " . expressionParser(Trim(StrReplace(A_LoopField, "{", ""))) . " {") . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 1) = "<") {
+out .= Trim("return " . expressionParser(StringTrimLeft(A_LoopField, 1))) . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 1) = "^") {
+out .= Trim("print(" . expressionParser(StringTrimLeft(A_LoopField, 1))) . ")" . Chr(10)
+}
+else if (Trim(A_LoopField) = ".") {
+out .= "}" . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 4) = "-???") {
+
+outTemp1 := StringTrimLeft(A_LoopField, 4)
+
+
+
+out .= "else if (" . expressionParser(outTemp1) . ")" . " {" . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 4) = "---?") {
+
+outTemp1 := StringTrimLeft(A_LoopField, 4)
+
+
+out .= "if (" . expressionParser(outTemp1) . ")" . " {" . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 4) = "--??") {
+
+outTemp1 := StringTrimLeft(A_LoopField, 4)
+
+out .= "else {" . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 1) = "#") {
+outTemp1 := Trim(StringTrimLeft(A_LoopField, 1))
+
+
+
+if (InStr(outTemp1, " ")) {
+outTemp2 := ""
+Loop, Parse, outTemp1, " " {
+if (A_Index = 0) {
+outTemp2 .= A_LoopField . "("
+allFuncNames_GLOABAL.add(Trim(A_LoopField))
+}
+else {
+outTemp2 .= StrReplace(A_LoopField, ":", " := ") . ", "
+}
+
+}
+StringTrimRight, outTemp2, outTemp2, 2
+
+out .= "func " . Trim(outTemp2) . ") {" . Chr(10)
+}
+else {
+allFuncNames_GLOABAL.add(Trim(outTemp1))
+out .= "func " . Trim(outTemp1) . "() {" . Chr(10)
+}
+
+
+
+}
+else if (InStr(A_LoopField, ":")) and (SubStr(Trim(A_LoopField), 1, 1) != "#") {
+outTemp1 := StrSplit(A_LoopField, ":", 1)
+outTemp2 := StrSplit(A_LoopField, ":", 2)
+
+out .= outTemp1 . " := " . Trim(expressionParser(outTemp2)) . Chr(10)
+}
+else if (SubStr(Trim(A_LoopField), 1, 1) = "/") {
+out .= Trim(expressionParser(A_LoopField)) . Chr(10)
+}
+else {
+out .= Trim(A_LoopField) . Chr(10)
+}
+
+}
+StringTrimRight, code, out, 1
+
+
+
+print(code)
+; end code
+code := indent_nested_curly_braces(code)
+code := restoreStrings(code)
+saveOutput(code, StringTrimRight(params, 3) . "htvm")
+}
