@@ -22,7 +22,7 @@ You need two separate repositories.
 The IDE is useless until you teach it the rules of H-Sharp.
 
 1.  Inside the `h-sharp` repository you just cloned, you will find the crucial instruction file: `HTVM-instructions.txt`.
-2.  Open the HTVM IDE, go to "Manage Instructions," and import this `HTVM-instructions.txt` file. This makes the IDE aware of H-Sharp's existence.
+2.  Open the HTVM IDE, go to "Manage Instructions," and import this `HTVM-instructions.txt` file.
 
 ### Step 3: Write and Transpile
 With the IDE configured, you can begin.
